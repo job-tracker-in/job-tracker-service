@@ -1,0 +1,26 @@
+target/
+# Ignore compiled files (we'll rebuild them)
+
+!.mvn/wrapper/maven-wrapper.jar
+# Exception: DO include Maven wrapper JAR
+# ! means "don't ignore this"
+
+.idea/
+# Ignore IntelliJ IDEA settings
+
+*.iws
+*.iml
+*.ipr
+# Ignore IntelliJ IDEA project files
+
+.vscode/
+# Ignore VS Code settings
+
+.DS_Store
+# Ignore Mac system files
+
+*.log
+# Ignore log files
+
+.git/
+# Ignore Git repository
