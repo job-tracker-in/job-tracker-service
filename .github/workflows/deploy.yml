@@ -48,12 +48,17 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:latest
 
       # 7. Deploy to DigitalOcean
+      - name: Write SSH key
+        run: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
       - name: Deploy on DigitalOcean
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
-          key: ${{ secrets.DO_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key
           script: |
             cd /opt/job-tracker
             docker compose pull
