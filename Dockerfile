@@ -1,4 +1,4 @@
-# STAGE 1: Build
+# -------- STAGE 1: Build --------
 FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
@@ -10,9 +10,10 @@ COPY pom.xml .
 RUN ./mvnw dependency:go-offline -B
 
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests \
+ && mv target/*.jar target/job-tracker.jar
 
-# STAGE 2: Runtime
+# -------- STAGE 2: Runtime --------
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
