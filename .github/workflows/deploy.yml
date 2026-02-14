@@ -47,12 +47,12 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:latest
 
-      # 7. Write SSH key (runner-safe location)
+      # 7. Write SSH key to runner HOME (safe & writable)
       - name: Write SSH key
         run: |
-          mkdir -p "$GITHUB_HOME/.ssh"
-          echo "${{ secrets.DO_SSH_KEY }}" > "$GITHUB_HOME/.ssh/deploy_key"
-          chmod 600 "$GITHUB_HOME/.ssh/deploy_key"
+          mkdir -p "$HOME/.ssh"
+          echo "${{ secrets.DO_SSH_KEY }}" > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
 
       # 8. Deploy to DigitalOcean
       - name: Deploy on DigitalOcean
