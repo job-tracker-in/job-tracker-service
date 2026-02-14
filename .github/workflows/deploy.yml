@@ -47,12 +47,12 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:latest
 
-      # 7. Write SSH key to file
+      # 7. Write SSH key EXACTLY where appleboy expects it
       - name: Write SSH key
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DO_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          mkdir -p /github/home/.ssh
+          echo "${{ secrets.DO_SSH_KEY }}" > /github/home/.ssh/deploy_key
+          chmod 600 /github/home/.ssh/deploy_key
 
       # 8. Deploy to DigitalOcean
       - name: Deploy on DigitalOcean
