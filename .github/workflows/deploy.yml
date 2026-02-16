@@ -1,35 +1,38 @@
 name: Job Tracker CI/CD
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
-      # 2. Setup Java 21
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-      # 3. Build Spring Boot JAR
+
       - name: Build application
         run: mvn clean package -DskipTests
-      # 4. Enable Docker Buildx
+        continue-on-error: false
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      # 5. Login to Docker Hub
+
       - name: Docker Hub Login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      # 6. Build & Push Docker Image
-      - name: Build and Push Docker Image (AMD64)
+
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -38,7 +41,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:latest
-      # 7. Deploy to DigitalOcean
+            ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:${{ github.sha }}
+
       - name: Deploy on DigitalOcean
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -46,6 +50,55 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
+            set -e
+            
+            echo "=========================================="
+            echo "Starting deployment at $(date)"
+            echo "=========================================="
+            
             cd /opt/job-tracker
+            
+            echo "1. Pulling latest Docker image..."
             docker compose pull
+            
+            echo "2. Stopping old containers..."
+            docker compose down
+            
+            echo "3. Starting new containers..."
             docker compose up -d
+            
+            echo "4. Waiting for application to start (10 seconds)..."
+            sleep 10
+            
+            echo "5. Verifying deployment..."
+            if ! docker compose ps | grep -q "Up"; then
+              echo "❌ Container failed to start!"
+              docker compose logs
+              exit 1
+            fi
+            
+            echo "6. Health check - testing application response..."
+            if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✅ Health check passed!"
+            else
+              echo "❌ Health check failed!"
+              docker compose logs
+              exit 1
+            fi
+            
+            echo "7. Showing deployment status..."
+            docker compose ps
+            
+            echo "=========================================="
+            echo "✅ Deployment completed successfully!"
+            echo "=========================================="
+            
+            echo "Current containers:"
+            docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+
+      - name: Deployment Success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
