@@ -1,4 +1,4 @@
-<img width="1440" height="900" alt="Screenshot 2026-02-25 at 7 27 33 PM" src="https://github.com/user-attachments/assets/d78945a2-bb3d-4a77-b0b1-fc4299c2bf82" /># 🎯 Job Tracker — Free Job Application Manager
+# 🎯 Job Tracker — Free Job Application Manager
 
 > A production-ready, full-stack web application to help job seekers organise and track their job applications efficiently.
 
