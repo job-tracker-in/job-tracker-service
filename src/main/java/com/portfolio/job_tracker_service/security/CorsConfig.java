@@ -17,8 +17,12 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Allow your frontend origin
-        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://job-tracker.in"
-                ,"https://www.job-tracker.in"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "https://job-tracker.in",
+                "https://www.job-tracker.in",
+                "chrome-extension://*",
+                "moz-extension://*"));
 
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
