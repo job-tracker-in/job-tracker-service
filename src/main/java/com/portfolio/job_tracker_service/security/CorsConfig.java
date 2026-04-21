@@ -21,8 +21,7 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "https://job-tracker.in",
                 "https://www.job-tracker.in",
-                "chrome-extension://*",
-                "moz-extension://*"));
+                "chrome-extension://iboaffefjgogaoogpgdiejekfhhhofpm"));
 
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
