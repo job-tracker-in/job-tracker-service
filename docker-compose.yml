@@ -225,8 +225,8 @@ services:
     depends_on:
       - prometheus
 
-    mem_limit: 100m
-    cpus: "0.10"
+    mem_limit: 256m
+    cpus: "0.15"
 
     restart: always
     networks:
