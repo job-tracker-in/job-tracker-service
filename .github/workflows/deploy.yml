@@ -45,7 +45,7 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
-          source: "docker-compose.yml,prometheus.yml,grafana/provisioning"
+          source: "docker-compose.yml,prometheus.yml,nginx.conf,grafana/provisioning"
           target: "/opt/job-tracker"
       # 8. Deploy to DigitalOcean
       - name: Deploy on DigitalOcean
@@ -58,3 +58,4 @@ jobs:
             cd /opt/job-tracker
             docker compose pull
             docker compose up -d
+            docker compose exec nginx nginx -s reload
