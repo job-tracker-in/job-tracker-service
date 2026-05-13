@@ -58,4 +58,4 @@ jobs:
             cd /opt/job-tracker
             docker compose pull
             docker compose up -d
-            docker compose exec nginx nginx -s reload
+            docker compose restart nginx
