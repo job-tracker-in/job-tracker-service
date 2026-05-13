@@ -8,5 +8,5 @@ datasources:
     isDefault: true
     editable: false
     jsonData:
-      httpMethod: POST
+      httpMethod: GET
       timeInterval: 15s
