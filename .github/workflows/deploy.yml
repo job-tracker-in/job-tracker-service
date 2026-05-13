@@ -38,7 +38,16 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/job-tracker-api:latest
-      # 7. Deploy to DigitalOcean
+      # 7. Copy config files to DigitalOcean
+      - name: Sync config files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          source: "docker-compose.yml,prometheus.yml,grafana/provisioning"
+          target: "/opt/job-tracker"
+      # 8. Deploy to DigitalOcean
       - name: Deploy on DigitalOcean
         uses: appleboy/ssh-action@v1.0.3
         with:

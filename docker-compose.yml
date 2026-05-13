@@ -94,7 +94,7 @@ services:
         max-file: "2"
 
   api:
-    image: krkzero9/jobtracker-api:latest
+    image: krkzero9/job-tracker-api:latest
     container_name: prod_api
 
     environment:
@@ -110,7 +110,7 @@ services:
       LOG_LEVEL: "INFO"
       SERVER_PORT: "8080"
       SHUTDOWN_TIMEOUT: "30s"
-      ACTUATOR_ENDPOINTS: "health,info"
+      ACTUATOR_ENDPOINTS: "health,info,prometheus"
 
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
@@ -170,8 +170,80 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prod_prometheus
+
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+    ports:
+      - "127.0.0.1:9090:9090"
+
+    depends_on:
+      - api
+
+    mem_limit: 150m
+    cpus: "0.15"
+
+    restart: always
+    networks:
+      - app_network
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: prod_grafana
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+
+    ports:
+      - "127.0.0.1:3001:3000"
+
+    depends_on:
+      - prometheus
+
+    mem_limit: 100m
+    cpus: "0.10"
+
+    restart: always
+    networks:
+      - app_network
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:
