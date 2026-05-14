@@ -57,5 +57,5 @@ jobs:
           script: |
             cd /opt/job-tracker
             docker compose pull
-            docker compose up -d
+            docker compose up -d --remove-orphans
             docker compose restart nginx
