@@ -194,6 +194,26 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: prod_redis_exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "127.0.0.1:9121:9121"
+    depends_on:
+      - redis
+    mem_limit: 20m
+    cpus: "0.05"
+    restart: always
+    networks:
+      - app_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prod_prometheus
