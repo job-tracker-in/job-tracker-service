@@ -274,7 +274,7 @@ services:
     depends_on:
       - prometheus
 
-    mem_limit: 256m
+    mem_limit: 320m
     cpus: "0.15"
 
     restart: always
