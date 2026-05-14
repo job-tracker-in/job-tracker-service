@@ -107,6 +107,9 @@ services:
 
       KEYCLOAK_ISSUER_URI: https://auth.job-tracker.in/realms/jobtracker
 
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+
       LOG_LEVEL: "INFO"
       SERVER_PORT: "8080"
       SHUTDOWN_TIMEOUT: "30s"
@@ -123,6 +126,8 @@ services:
       postgres:
         condition: service_healthy
       keycloak:
+        condition: service_started
+      redis:
         condition: service_started
 
     ports:
@@ -164,6 +169,25 @@ services:
     networks:
       - app_network
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  redis:
+    image: redis:7-alpine
+    container_name: prod_redis
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - "127.0.0.1:6379:6379"
+    mem_limit: 64m
+    cpus: "0.10"
+    restart: always
+    networks:
+      - app_network
     logging:
       driver: json-file
       options:
@@ -225,7 +249,7 @@ services:
     depends_on:
       - prometheus
 
-    mem_limit: 384m
+    mem_limit: 256m
     cpus: "0.15"
 
     restart: always
@@ -240,6 +264,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local
   prometheus_data:
     driver: local
