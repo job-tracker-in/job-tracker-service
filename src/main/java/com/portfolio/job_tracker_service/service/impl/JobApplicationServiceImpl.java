@@ -2,7 +2,9 @@ package com.portfolio.job_tracker_service.service.impl;
 
 import com.portfolio.job_tracker_service.exception.ErrorCode;
 import com.portfolio.job_tracker_service.exception.JobApplicationException;
+import com.portfolio.job_tracker_service.model.ApplicationStatus;
 import com.portfolio.job_tracker_service.model.UserDetails;
+import com.portfolio.job_tracker_service.service.StatusTransitionValidator;
 import com.portfolio.job_tracker_service.model.entity.JobApplicationEntity;
 import com.portfolio.job_tracker_service.model.entity.CompanyEntity;
 import com.portfolio.job_tracker_service.model.request.CreateCompanyRequest;
@@ -107,7 +109,26 @@ public class JobApplicationServiceImpl implements JobApplicationService {
 
     @Override
     public void updateStatusOrNotes(UUID applicationId, UpdateStatusRequest updateStatusRequest, UUID userId) {
-        jobApplicationRepository.updateStatus(applicationId,updateStatusRequest,userId);
+        String newStatusStr = updateStatusRequest.status();
+        if (newStatusStr != null) {
+            ApplicationStatus newStatus;
+            try {
+                newStatus = ApplicationStatus.valueOf(newStatusStr);
+            } catch (IllegalArgumentException e) {
+                throw new JobApplicationException(
+                        ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                        "Invalid status: " + newStatusStr,
+                        Map.of("status", newStatusStr));
+            }
+            if (StatusTransitionValidator.commentRequired(newStatus)
+                    && (updateStatusRequest.notes() == null || updateStatusRequest.notes().isBlank())) {
+                throw new JobApplicationException(
+                        ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                        "Notes are required when status is " + newStatus,
+                        Map.of("status", newStatus));
+            }
+        }
+        jobApplicationRepository.updateStatus(applicationId, updateStatusRequest, userId);
     }
 
     @Override

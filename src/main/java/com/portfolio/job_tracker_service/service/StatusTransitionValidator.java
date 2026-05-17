@@ -14,11 +14,18 @@ public class StatusTransitionValidator {
                     ApplicationStatus.REJECTED, Set.of(),
                     ApplicationStatus.WITHDRAWN,Set.of());
 
-    public static boolean isValidTransitions(ApplicationStatus oldStatus, ApplicationStatus newStatus){
-        return ALLOWED_TRANSITIONS.getOrDefault(oldStatus,Set.of()).contains(newStatus);
+    public static TransitionResult validate(ApplicationStatus from, ApplicationStatus to) {
+        if (ALLOWED_TRANSITIONS.getOrDefault(from, Set.of()).contains(to))
+            return new TransitionResult.Allowed();
+        return new TransitionResult.Denied(
+            "Transition from %s to %s is not allowed".formatted(from, to)
+        );
     }
 
-    public static boolean commentRequired(ApplicationStatus status){
-        return status == ApplicationStatus.REJECTED || status == ApplicationStatus.WITHDRAWN;
+    public static boolean commentRequired(ApplicationStatus status) {
+        return switch (status) {
+            case REJECTED, WITHDRAWN -> true;
+            default -> false;
+        };
     }
 }

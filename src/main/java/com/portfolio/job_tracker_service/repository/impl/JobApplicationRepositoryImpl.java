@@ -2,11 +2,14 @@ package com.portfolio.job_tracker_service.repository.impl;
 
 import com.portfolio.job_tracker_service.exception.ErrorCode;
 import com.portfolio.job_tracker_service.exception.JobApplicationException;
+import com.portfolio.job_tracker_service.model.ApplicationStatus;
 import com.portfolio.job_tracker_service.model.entity.JobApplicationEntity;
 import com.portfolio.job_tracker_service.model.request.CreateJobApplicationRequest;
 import com.portfolio.job_tracker_service.model.request.JobAppFilterRequest;
 import com.portfolio.job_tracker_service.model.request.UpdateStatusRequest;
 import com.portfolio.job_tracker_service.repository.JobApplicationRepository;
+import com.portfolio.job_tracker_service.service.StatusTransitionValidator;
+import com.portfolio.job_tracker_service.service.TransitionResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -109,7 +112,22 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
                     Map.of("applicationId", applicationId));
         }
 
-        // 2. Update the application
+        // 2. Validate transition if status is changing
+        String newStatusStr = updateStatusRequest.status();
+        if (newStatusStr != null && !newStatusStr.equals(oldStatus)) {
+            switch (StatusTransitionValidator.validate(
+                    ApplicationStatus.valueOf(oldStatus),
+                    ApplicationStatus.valueOf(newStatusStr))) {
+                case TransitionResult.Allowed a -> {}
+                case TransitionResult.Denied d -> throw new JobApplicationException(
+                        ErrorCode.VALIDATION_FAILED,
+                        HttpStatus.CONFLICT,
+                        d.reason(),
+                        Map.of("applicationId", applicationId, "from", oldStatus, "to", newStatusStr));
+            }
+        }
+
+        // 3. Update the application
         String sql = """
         UPDATE job_application
         SET status = COALESCE(:status, status),
@@ -135,7 +153,7 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
                     Map.of("applicationId", applicationId));
         }
 
-        // 3. Insert history ONLY if status changed
+        // 4. Insert history ONLY if status changed
         String newStatus = updateStatusRequest.status();
         if (newStatus != null && !newStatus.equals(oldStatus)) {
             String insertHistorySql = """
