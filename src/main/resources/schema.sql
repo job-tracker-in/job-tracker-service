@@ -29,6 +29,10 @@ CREATE TABLE job_application (
     applied_date DATE,
     job_url TEXT,
     notes TEXT,
+    interview_date DATE,
+    salary VARCHAR(100),
+    recruiter_name VARCHAR(255),
+    recruiter_email VARCHAR(255),
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );

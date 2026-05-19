@@ -19,6 +19,9 @@ public record CreateJobApplicationRequest(
         String location,
 
         String jobUrl,
-
-        String notes
+        String notes,
+        LocalDate interviewDate,
+        String salary,
+        String recruiterName,
+        String recruiterEmail
 ) {}

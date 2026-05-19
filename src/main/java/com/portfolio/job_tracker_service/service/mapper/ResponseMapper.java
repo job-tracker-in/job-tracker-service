@@ -19,6 +19,8 @@ public final class ResponseMapper {
     public static List<ApplicationResponse> applicationResponseMapper (List<JobApplicationEntity> jobApplicationEntities){
         return jobApplicationEntities.stream().map(entity ->
                 new ApplicationResponse(entity.id(), entity.company(), entity.location(), entity.title(), entity.source(),
-                        entity.status(), entity.appliedDate(), entity.notes(),entity.updatedAt(),entity.jobUrl())).collect(Collectors.toList());
+                        entity.status(), entity.appliedDate(), entity.notes(), entity.updatedAt(), entity.jobUrl(),
+                        entity.interviewDate(), entity.salary(), entity.recruiterName(), entity.recruiterEmail()))
+                .collect(Collectors.toList());
     }
 }

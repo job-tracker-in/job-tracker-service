@@ -8,5 +8,9 @@ public record ApplicationResponse(UUID id, String company, String location,
                                   String jobTitle, String source,
                                   String status, LocalDate appliedDate,
                                   String notes, LocalDateTime lastModifiedDate,
-                                  String jobUrl) {
+                                  String jobUrl,
+                                  LocalDate interviewDate,
+                                  String salary,
+                                  String recruiterName,
+                                  String recruiterEmail) {
 }

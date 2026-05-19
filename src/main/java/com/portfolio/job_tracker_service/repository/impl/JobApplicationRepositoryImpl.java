@@ -41,15 +41,21 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
             rs.getTimestamp("created_at").toLocalDateTime(),
             rs.getTimestamp("updated_at").toLocalDateTime(),
             rs.getString("company"),
-            rs.getString("location")
+            rs.getString("location"),
+            rs.getDate("interview_date") != null ? rs.getDate("interview_date").toLocalDate() : null,
+            rs.getString("salary"),
+            rs.getString("recruiter_name"),
+            rs.getString("recruiter_email")
     );
 
 
     @Override
     public UUID insert(CreateJobApplicationRequest request, UUID companyId, UUID userId) {
         String sql = """
-                    INSERT INTO job_application (id, company_id, user_id, title, source, status, applied_date, job_url, notes)
-                    VALUES (:id, :company_id, :user_id, :title, :source, :status, :applied_date, :job_url, :notes)
+                    INSERT INTO job_application (id, company_id, user_id, title, source, status, applied_date, job_url, notes,
+                                                interview_date, salary, recruiter_name, recruiter_email)
+                    VALUES (:id, :company_id, :user_id, :title, :source, :status, :applied_date, :job_url, :notes,
+                            :interview_date, :salary, :recruiter_name, :recruiter_email)
                 """;
 
         UUID applicationId = UUID.randomUUID();
@@ -63,6 +69,10 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
         params.put("applied_date", request.appliedDate());
         params.put("job_url", request.jobUrl());
         params.put("notes", request.notes());
+        params.put("interview_date", request.interviewDate());
+        params.put("salary", request.salary());
+        params.put("recruiter_name", request.recruiterName());
+        params.put("recruiter_email", request.recruiterEmail());
         var row = jdbc.update(sql, params);
 
         if (row == 0) {
@@ -132,6 +142,10 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
         UPDATE job_application
         SET status = COALESCE(:status, status),
             notes = COALESCE(:notes, notes),
+            interview_date = COALESCE(:interviewDate, interview_date),
+            salary = COALESCE(:salary, salary),
+            recruiter_name = COALESCE(:recruiterName, recruiter_name),
+            recruiter_email = COALESCE(:recruiterEmail, recruiter_email),
             updated_at = :updatedAt
         WHERE id = :id AND user_id = :userId
         """;
@@ -140,6 +154,10 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
                 .addValue("id", applicationId)
                 .addValue("status", updateStatusRequest.status())
                 .addValue("notes", updateStatusRequest.notes())
+                .addValue("interviewDate", updateStatusRequest.interviewDate())
+                .addValue("salary", updateStatusRequest.salary())
+                .addValue("recruiterName", updateStatusRequest.recruiterName())
+                .addValue("recruiterEmail", updateStatusRequest.recruiterEmail())
                 .addValue("updatedAt", LocalDateTime.now())
                 .addValue("userId", userId);
 

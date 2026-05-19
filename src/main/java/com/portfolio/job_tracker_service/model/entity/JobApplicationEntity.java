@@ -17,5 +17,9 @@ public record JobApplicationEntity(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         String company,
-        String location
+        String location,
+        LocalDate interviewDate,
+        String salary,
+        String recruiterName,
+        String recruiterEmail
 ) {}
