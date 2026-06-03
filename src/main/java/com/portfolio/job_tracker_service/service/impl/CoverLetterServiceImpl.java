@@ -67,8 +67,7 @@ public class CoverLetterServiceImpl implements CoverLetterService {
         if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
             sb.append("Job Description:\n").append(request.jobDescription()).append("\n");
         }
-        sb.append("\nCandidate Skills & Background:\n").append(request.skills()).append("\n");
-        sb.append("\nWrite only the cover letter text, ready to send.");
+        sb.append("\nWrite only the cover letter text, ready to send. Do not include subject lines or placeholders.");
         return sb.toString();
     }
 
