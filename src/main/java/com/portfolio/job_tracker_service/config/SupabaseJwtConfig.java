@@ -7,25 +7,18 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
-
 @Configuration
 public class SupabaseJwtConfig {
 
-    @Value("${supabase.jwt.secret}")
-    private String jwtSecret;
+    @Value("${supabase.jwks-uri}")
+    private String jwksUri;
 
     @Value("${supabase.issuer-uri}")
     private String issuerUri;
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        SecretKeySpec secretKey = new SecretKeySpec(
-                Base64.getDecoder().decode(jwtSecret),
-                "HmacSHA256"
-        );
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUri).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
         OAuth2TokenValidator<Jwt> withExpiry = new JwtTimestampValidator();
