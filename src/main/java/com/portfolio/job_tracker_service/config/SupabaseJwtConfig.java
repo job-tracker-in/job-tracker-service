@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Configuration
 public class SupabaseJwtConfig {
@@ -22,7 +22,7 @@ public class SupabaseJwtConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         SecretKeySpec secretKey = new SecretKeySpec(
-                jwtSecret.getBytes(StandardCharsets.UTF_8),
+                Base64.getDecoder().decode(jwtSecret),
                 "HmacSHA256"
         );
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey).build();
