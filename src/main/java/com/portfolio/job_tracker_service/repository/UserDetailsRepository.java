@@ -11,5 +11,7 @@ public interface UserDetailsRepository {
 
     boolean existsByUserId(String userId);
     Optional<UserDetails> findByUserId(UUID userId);
+    Optional<UserDetails> findByEmail(String email);
+    void migrateUserId(UUID oldId, UUID newId);
     UserDetails save(UserDetails userDetails);
 }

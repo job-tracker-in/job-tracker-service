@@ -15,6 +15,5 @@ public interface JobApplicationRepository {
     Optional<JobApplicationEntity> findById(UUID id);
     void updateStatus(UUID applicationId, UpdateStatusRequest updateStatusRequest, UUID userId);
     List<JobApplicationEntity> fetchApplications(UUID userId, JobAppFilterRequest jobAppFilterRequest);
-    void deleteByIds(List<UUID> uuids);
     long countJobApplications(JobAppFilterRequest jobAppFilterRequest, UUID userId);
 }

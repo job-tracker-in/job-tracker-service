@@ -1,7 +1,6 @@
 package com.portfolio.job_tracker_service.config;
 
 import com.portfolio.job_tracker_service.model.UserDetails;
-import com.portfolio.job_tracker_service.service.JobApplicationService;
 import com.portfolio.job_tracker_service.service.impl.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,23 +16,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Filter to automatically create user entries in the database
- * when they first authenticate via Keycloak.
- * <p>
- * This ensures that the user_id from JWT token exists in the user_details table
- * before any business logic tries to use it (preventing foreign key violations).
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserAutoCreateFilter extends OncePerRequestFilter {
 
-    private final JobApplicationService userService1;
     private final UserService userService;
 
     @Override
@@ -43,58 +33,57 @@ public class UserAutoCreateFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         try {
-            // Get the authenticated user from Security Context
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-            // Only process if user is authenticated and principal is JWT
             if (authentication != null &&
                     authentication.isAuthenticated() &&
                     authentication.getPrincipal() instanceof Jwt jwt) {
 
-                // Extract user information from JWT claims
                 String userId = jwt.getClaimAsString("sub");
+                String email = jwt.getClaimAsString("email");
 
                 if (userId != null && !userId.isBlank()) {
+                    String firstName = extractFirstName(jwt);
+                    String lastName = extractLastName(jwt);
 
-                    String roles = "";
-                    Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-                    if (resourceAccess != null && resourceAccess.containsKey("jobtracker-api")) {
-                        Map<String, Object> jobTracker = (Map<String, Object>) resourceAccess.get("jobtracker-api");
-                        if (jobTracker != null && jobTracker.containsKey("roles")) {
-                            List<String> rolesList = (List<String>) jobTracker.get("roles");
-                            roles = String.join(",", rolesList);
-                        }
-                    }
-                    String email = jwt.getClaimAsString("email");
-                    String firstName = jwt.getClaimAsString("given_name");
-                    String lastName = jwt.getClaimAsString("family_name");
-
-                    UserDetails user = userService.findOrCreateUser(new UserDetails(UUID.fromString(userId),firstName,lastName,email,roles));
-
-                    logger.debug("User loaded: " + user.email());
+                    UserDetails user = userService.findOrCreateUser(
+                            new UserDetails(UUID.fromString(userId), firstName, lastName, email, ""));
                     request.setAttribute("currentUser", user);
-
-                    log.debug("User validation complete for userId: {}", userId);
+                    log.debug("User loaded: {}", email);
                 }
             }
         } catch (Exception e) {
-            // Log error but don't break the request flow
-            // This ensures the application continues to work even if user sync fails
             log.error("Error in UserAutoCreateFilter - continuing request processing", e);
         }
 
-        // Continue with the filter chain
         filterChain.doFilter(request, response);
+    }
+
+    private String extractFirstName(Jwt jwt) {
+        Map<String, Object> meta = jwt.getClaim("user_metadata");
+        if (meta == null) return "";
+        if (meta.containsKey("given_name")) return String.valueOf(meta.get("given_name"));
+        String fullName = meta.containsKey("full_name")
+                ? String.valueOf(meta.get("full_name"))
+                : String.valueOf(meta.getOrDefault("name", ""));
+        int space = fullName.indexOf(' ');
+        return space > 0 ? fullName.substring(0, space) : fullName;
+    }
+
+    private String extractLastName(Jwt jwt) {
+        Map<String, Object> meta = jwt.getClaim("user_metadata");
+        if (meta == null) return "";
+        if (meta.containsKey("family_name")) return String.valueOf(meta.get("family_name"));
+        String fullName = meta.containsKey("full_name")
+                ? String.valueOf(meta.get("full_name"))
+                : String.valueOf(meta.getOrDefault("name", ""));
+        int space = fullName.indexOf(' ');
+        return space > 0 ? fullName.substring(space + 1) : "";
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/static") ||
-                path.startsWith("/css") ||
-                path.startsWith("/js") ||
-                path.startsWith("/images") ||
-                path.startsWith("/public") ||
-                path.equals("/health");
+        return path.startsWith("/actuator") || path.startsWith("/public");
     }
 }

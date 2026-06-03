@@ -22,9 +22,7 @@ public interface JobApplicationService {
 
     PagedApplicationResponse fetchApplications(UUID userId, JobAppFilterRequest jobAppFilterRequest);
 
-    void deleteJobApplication(List<UUID> uuids);
-
-    List<String> searchCompanyNames(String query, UUID userId);
+List<String> searchCompanyNames(String query, UUID userId);
 
     void updateStatusOrNotes(UUID applicationId, UpdateStatusRequest updateStatusRequest, UUID userId);
 

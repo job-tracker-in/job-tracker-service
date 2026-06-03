@@ -90,12 +90,7 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     }
 
 
-    @Override
-    public void deleteJobApplication(List<UUID> uuids) {
-        jobApplicationRepository.deleteByIds(uuids);
-    }
-
-    @Override
+@Override
     public List<String> searchCompanyNames(String name, UUID userId) {
         return companyRepository.searchCompanyNames(name,userId).orElseThrow(() ->
                 new JobApplicationException(

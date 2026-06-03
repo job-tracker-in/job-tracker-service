@@ -60,7 +60,7 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
 
         UUID applicationId = UUID.randomUUID();
         Map<String, Object> params = new HashMap<>();
-        params.put("id", UUID.randomUUID());
+        params.put("id", applicationId);
         params.put("company_id", companyId);
         params.put("user_id", userId);
         params.put("title", request.jobTitle());
@@ -247,21 +247,6 @@ public class JobApplicationRepositoryImpl implements JobApplicationRepository {
         return jdbc.query(sql.toString(), params, rowMapper);
     }
 
-
-    @Override
-    public void deleteByIds(List<UUID> uuids) {
-        if (uuids == null || uuids.isEmpty()) {
-            return;
-        }
-
-        String sql = """
-                DELETE FROM job_application
-                WHERE id IN (:ids)
-            """;
-
-        int deletedCount = jdbc.update(sql, Map.of("ids", uuids));
-        log.info("Deleted" + deletedCount + "records");
-    }
 
     @Override
     public long countJobApplications(JobAppFilterRequest req, UUID userId) {

@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: keycloak,jobtracker
+      POSTGRES_DB: jobtracker
       POSTGRES_INITDB_ARGS: "-E UTF8"
 
     volumes:
@@ -39,60 +39,6 @@ services:
         max-size: "5m"
         max-file: "2"
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    container_name: prod_keycloak
-
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: postgres
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
-
-      KC_HOSTNAME: auth.job-tracker.in
-      KC_HOSTNAME_STRICT: "true"
-      KC_PROXY_HEADERS: xforwarded
-      KC_HTTP_ENABLED: "true"
-
-      JAVA_OPTS_KC_HEAP: >
-        -Xms256m
-        -Xmx384m
-        -XX:MetaspaceSize=96m
-        -XX:MaxMetaspaceSize=192m
-
-      KC_DB_POOL_INITIAL_SIZE: "2"
-      KC_DB_POOL_MIN_SIZE: "2"
-      KC_DB_POOL_MAX_SIZE: "5"
-
-      KC_HEALTH_ENABLED: "true"
-      KC_METRICS_ENABLED: "false"
-      KC_LOG_LEVEL: "WARN"
-
-    command: start
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-    ports:
-      - "127.0.0.1:8080:8080"
-
-    mem_limit: 650m
-    cpus: "0.40"
-
-    restart: always
-    networks:
-      - app_network
-
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "2"
-
   api:
     image: krkzero9/job-tracker-api:latest
     container_name: prod_api
@@ -105,7 +51,9 @@ services:
       DB_POOL_MIN_SIZE: "2"
       DB_POOL_MAX_SIZE: "5"
 
-      KEYCLOAK_ISSUER_URI: https://auth.job-tracker.in/realms/jobtracker
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      SUPABASE_ISSUER_URI: ${SUPABASE_ISSUER_URI}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
 
       REDIS_HOST: redis
       REDIS_PORT: "6379"
@@ -125,8 +73,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      keycloak:
-        condition: service_started
       redis:
         condition: service_healthy
 
@@ -159,7 +105,6 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
 
     depends_on:
-      - keycloak
       - api
 
     mem_limit: 64m

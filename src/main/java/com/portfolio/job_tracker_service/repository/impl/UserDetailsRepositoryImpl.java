@@ -82,9 +82,37 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
         return userDetails;
     }
 
-    /**
-     * RowMapper for UserDetails
-     */
+    @Override
+    public Optional<UserDetails> findByEmail(String email) {
+        String sql = """
+            SELECT id, email, first_name, last_name, roles
+            FROM user_details WHERE email = :email
+        """;
+        try {
+            UserDetails user = namedParameterJdbcTemplate.queryForObject(
+                    sql, new MapSqlParameterSource("email", email), rowMapper);
+            return Optional.ofNullable(user);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public void migrateUserId(UUID oldId, UUID newId) {
+        namedParameterJdbcTemplate.update(
+                "UPDATE job_application_history SET user_id = :newId WHERE user_id = :oldId",
+                new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
+
+        namedParameterJdbcTemplate.update(
+                "UPDATE job_application SET user_id = :newId WHERE user_id = :oldId",
+                new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
+
+        namedParameterJdbcTemplate.update(
+                "UPDATE user_details SET id = :newId WHERE id = :oldId",
+                new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
+
+        log.info("Migrated user UUID {} → {}", oldId, newId);
+    }
 
     private final RowMapper<UserDetails> rowMapper = (rs, rowNum) -> new UserDetails(
             (UUID) rs.getObject("id"),

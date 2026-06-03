@@ -99,14 +99,7 @@ public class JobApplicationController {
         return ResponseEntity.ok(jobApplicationResponse);
     }
 
-    @DeleteMapping("/application")
-    @PreAuthorize("hasAuthority('application.delete')")
-    public ResponseEntity<Void> deleteJobApplication(@RequestBody List<UUID> uuids){
-        jobApplicationService.deleteJobApplication(uuids);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/application/{id}")
+@PatchMapping("/application/{id}")
     @PreAuthorize("hasAuthority('application.write')")
     public ResponseEntity<Void> updateStatusOrNotes(@PathVariable UUID id, @RequestBody UpdateStatusRequest updateStatusRequest,
                                                      @AuthenticationPrincipal Jwt jwt){
