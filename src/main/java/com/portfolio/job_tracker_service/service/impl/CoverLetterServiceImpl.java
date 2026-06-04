@@ -6,6 +6,7 @@ import com.portfolio.job_tracker_service.model.response.CoverLetterResponse;
 import com.portfolio.job_tracker_service.model.response.JobApplicationResponse;
 import com.portfolio.job_tracker_service.repository.UserDetailsRepository;
 import com.portfolio.job_tracker_service.service.CoverLetterService;
+import com.portfolio.job_tracker_service.service.CvService;
 import com.portfolio.job_tracker_service.service.JobApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,16 +29,19 @@ public class CoverLetterServiceImpl implements CoverLetterService {
     private final RestClient geminiRestClient;
     private final JobApplicationService jobApplicationService;
     private final UserDetailsRepository userDetailsRepository;
+    private final CvService cvService;
     private final String model;
 
     public CoverLetterServiceImpl(
             @Qualifier("geminiRestClient") RestClient geminiRestClient,
             JobApplicationService jobApplicationService,
             UserDetailsRepository userDetailsRepository,
+            CvService cvService,
             @Value("${gemini.api.model:llama-3.3-70b-versatile}") String model) {
         this.geminiRestClient = geminiRestClient;
         this.jobApplicationService = jobApplicationService;
         this.userDetailsRepository = userDetailsRepository;
+        this.cvService = cvService;
         this.model = model;
     }
 
@@ -49,7 +53,9 @@ public class CoverLetterServiceImpl implements CoverLetterService {
                 .map(u -> u.firstName() + " " + u.lastName())
                 .orElse("");
 
-        String prompt = buildPrompt(application, request, userName);
+        String resumeText = cvService.getExtractedText(userId).orElse("");
+
+        String prompt = buildPrompt(application, request, userName, resumeText);
 
         GroqRequest groqRequest = new GroqRequest(
                 model,
@@ -86,7 +92,8 @@ public class CoverLetterServiceImpl implements CoverLetterService {
         }
     }
 
-    private String buildPrompt(JobApplicationResponse application, CoverLetterRequest request, String userName) {
+    private String buildPrompt(JobApplicationResponse application, CoverLetterRequest request,
+                               String userName, String resumeText) {
         String tone = request.tone() != null ? request.tone() : "professional";
         StringBuilder sb = new StringBuilder();
         sb.append("Write a ").append(tone).append(" cover letter for the following:\n\n");
@@ -95,13 +102,16 @@ public class CoverLetterServiceImpl implements CoverLetterService {
         if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
             sb.append("Job Description:\n").append(request.jobDescription()).append("\n");
         }
+        if (!resumeText.isBlank()) {
+            sb.append("\nCandidate Resume:\n").append(resumeText).append("\n");
+        }
         if (!userName.isBlank()) {
             sb.append("\nCandidate Name: ").append(userName).append("\n");
         }
         sb.append("\nWrite only the cover letter text, ready to send. ");
-        sb.append("Do not include subject lines or placeholders like [Your Name]. ");
+        sb.append("Do not include subject lines or placeholders. ");
         if (!userName.isBlank()) {
-            sb.append("Sign the letter with the candidate's actual name: ").append(userName).append(".");
+            sb.append("Sign the letter with: ").append(userName).append(".");
         }
         return sb.toString();
     }

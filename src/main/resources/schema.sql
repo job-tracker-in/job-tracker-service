@@ -37,6 +37,14 @@ CREATE TABLE job_application (
     updated_at TIMESTAMP DEFAULT now()
 );
 
+CREATE TABLE user_cv (
+    user_id      UUID PRIMARY KEY REFERENCES user_details(id),
+    filename     VARCHAR(255) NOT NULL,
+    pdf_data     BYTEA NOT NULL,
+    extracted_text TEXT NOT NULL,
+    uploaded_at  TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE job_application_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     application_id UUID NOT NULL REFERENCES job_application(id) ON DELETE CASCADE,
