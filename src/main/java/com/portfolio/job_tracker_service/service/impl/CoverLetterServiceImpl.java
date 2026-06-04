@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.portfolio.job_tracker_service.model.request.CoverLetterRequest;
 import com.portfolio.job_tracker_service.model.response.CoverLetterResponse;
 import com.portfolio.job_tracker_service.model.response.JobApplicationResponse;
+import com.portfolio.job_tracker_service.repository.UserDetailsRepository;
 import com.portfolio.job_tracker_service.service.CoverLetterService;
 import com.portfolio.job_tracker_service.service.JobApplicationService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,14 +27,17 @@ public class CoverLetterServiceImpl implements CoverLetterService {
 
     private final RestClient geminiRestClient;
     private final JobApplicationService jobApplicationService;
+    private final UserDetailsRepository userDetailsRepository;
     private final String model;
 
     public CoverLetterServiceImpl(
             @Qualifier("geminiRestClient") RestClient geminiRestClient,
             JobApplicationService jobApplicationService,
-            @Value("${gemini.api.model:gemini-2.0-flash}") String model) {
+            UserDetailsRepository userDetailsRepository,
+            @Value("${gemini.api.model:llama-3.3-70b-versatile}") String model) {
         this.geminiRestClient = geminiRestClient;
         this.jobApplicationService = jobApplicationService;
+        this.userDetailsRepository = userDetailsRepository;
         this.model = model;
     }
 
@@ -41,7 +45,11 @@ public class CoverLetterServiceImpl implements CoverLetterService {
     public CoverLetterResponse generate(UUID applicationId, UUID userId, CoverLetterRequest request) {
         JobApplicationResponse application = jobApplicationService.fetchApplicationHistory(applicationId, userId);
 
-        String prompt = buildPrompt(application, request);
+        String userName = userDetailsRepository.findByUserId(userId)
+                .map(u -> u.firstName() + " " + u.lastName())
+                .orElse("");
+
+        String prompt = buildPrompt(application, request, userName);
 
         GroqRequest groqRequest = new GroqRequest(
                 model,
@@ -78,7 +86,7 @@ public class CoverLetterServiceImpl implements CoverLetterService {
         }
     }
 
-    private String buildPrompt(JobApplicationResponse application, CoverLetterRequest request) {
+    private String buildPrompt(JobApplicationResponse application, CoverLetterRequest request, String userName) {
         String tone = request.tone() != null ? request.tone() : "professional";
         StringBuilder sb = new StringBuilder();
         sb.append("Write a ").append(tone).append(" cover letter for the following:\n\n");
@@ -87,7 +95,14 @@ public class CoverLetterServiceImpl implements CoverLetterService {
         if (request.jobDescription() != null && !request.jobDescription().isBlank()) {
             sb.append("Job Description:\n").append(request.jobDescription()).append("\n");
         }
-        sb.append("\nWrite only the cover letter text, ready to send. Do not include subject lines or placeholders.");
+        if (!userName.isBlank()) {
+            sb.append("\nCandidate Name: ").append(userName).append("\n");
+        }
+        sb.append("\nWrite only the cover letter text, ready to send. ");
+        sb.append("Do not include subject lines or placeholders like [Your Name]. ");
+        if (!userName.isBlank()) {
+            sb.append("Sign the letter with the candidate's actual name: ").append(userName).append(".");
+        }
         return sb.toString();
     }
 
