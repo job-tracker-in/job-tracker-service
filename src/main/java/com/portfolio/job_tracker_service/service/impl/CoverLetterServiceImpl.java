@@ -9,8 +9,13 @@ import com.portfolio.job_tracker_service.service.JobApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+
+import com.portfolio.job_tracker_service.exception.ErrorCode;
+import com.portfolio.job_tracker_service.exception.JobApplicationException;
 
 import java.util.List;
 import java.util.UUID;
@@ -48,14 +53,29 @@ public class CoverLetterServiceImpl implements CoverLetterService {
                 1024
         );
 
-        GroqResponse groqResponse = geminiRestClient.post()
-                .uri("/chat/completions")
-                .body(groqRequest)
-                .retrieve()
-                .body(GroqResponse.class);
-
-        String coverLetter = groqResponse.choices().get(0).message().content();
-        return new CoverLetterResponse(coverLetter);
+        try {
+            GroqResponse groqResponse = geminiRestClient.post()
+                    .uri("/chat/completions")
+                    .body(groqRequest)
+                    .retrieve()
+                    .body(GroqResponse.class);
+            String coverLetter = groqResponse.choices().get(0).message().content();
+            return new CoverLetterResponse(coverLetter);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                throw new JobApplicationException(
+                        ErrorCode.RATE_LIMIT_EXCEEDED,
+                        HttpStatus.TOO_MANY_REQUESTS,
+                        "Gemini API quota exceeded. Please try again in a minute.",
+                        java.util.Map.of());
+            }
+            log.error("Gemini API error {}: {}", e.getStatusCode(), e.getMessage());
+            throw new JobApplicationException(
+                    ErrorCode.INTERNAL_ERROR,
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Cover letter generation failed. Please try again.",
+                    java.util.Map.of());
+        }
     }
 
     private String buildPrompt(JobApplicationResponse application, CoverLetterRequest request) {
