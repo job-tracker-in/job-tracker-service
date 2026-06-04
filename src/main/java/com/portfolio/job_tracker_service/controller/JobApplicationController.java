@@ -68,7 +68,7 @@ public class JobApplicationController {
         UUID userId = UUID.fromString(jwt.getClaim("sub"));
         UUID id =jobApplicationService.createJobApplication(applicationRequest,userId);
         URI builder = uriBuilder
-                .path("/application")
+                .path("/application/{id}")
                 .buildAndExpand(id)
                 .toUri();
         return ResponseEntity.created(builder).build();
