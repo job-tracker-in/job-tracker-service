@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,13 +37,17 @@ public class CvServiceImpl implements CvService {
         String extractedText;
         try {
             pdfBytes = file.getBytes();
+            validateMagicBytes(pdfBytes);
             extractedText = extractText(pdfBytes);
         } catch (IOException e) {
             throw new JobApplicationException(ErrorCode.VALIDATION_FAILED,
                     HttpStatus.BAD_REQUEST, "Failed to read PDF file.", Map.of());
         }
 
-        UserCvEntity entity = new UserCvEntity(userId, file.getOriginalFilename(), pdfBytes, extractedText, null);
+        String safeName = Paths.get(file.getOriginalFilename() != null
+                ? file.getOriginalFilename() : "resume.pdf").getFileName().toString();
+
+        UserCvEntity entity = new UserCvEntity(userId, safeName, pdfBytes, extractedText, null);
         cvRepository.save(entity);
 
         return cvRepository.findByUserId(userId)
@@ -81,6 +86,15 @@ public class CvServiceImpl implements CvService {
         if (contentType == null || !contentType.equals("application/pdf")) {
             throw new JobApplicationException(ErrorCode.VALIDATION_FAILED,
                     HttpStatus.BAD_REQUEST, "Only PDF files are accepted.", Map.of());
+        }
+    }
+
+    private void validateMagicBytes(byte[] bytes) {
+        if (bytes.length < 4 ||
+                bytes[0] != 0x25 || bytes[1] != 0x50 ||
+                bytes[2] != 0x44 || bytes[3] != 0x46) {
+            throw new JobApplicationException(ErrorCode.VALIDATION_FAILED,
+                    HttpStatus.BAD_REQUEST, "File is not a valid PDF.", Map.of());
         }
     }
 
