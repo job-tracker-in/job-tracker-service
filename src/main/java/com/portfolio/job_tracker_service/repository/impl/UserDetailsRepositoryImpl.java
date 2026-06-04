@@ -99,6 +99,14 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
 
     @Override
     public void migrateUserId(UUID oldId, UUID newId) {
+        // INSERT new row first so FK constraints are satisfied when updating child tables
+        namedParameterJdbcTemplate.update("""
+                INSERT INTO user_details (id, first_name, last_name, email, roles, created_at)
+                SELECT :newId, first_name, last_name, email, roles, created_at
+                FROM user_details WHERE id = :oldId
+                """,
+                new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
+
         namedParameterJdbcTemplate.update(
                 "UPDATE job_application_history SET user_id = :newId WHERE user_id = :oldId",
                 new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
@@ -108,8 +116,8 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
                 new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
 
         namedParameterJdbcTemplate.update(
-                "UPDATE user_details SET id = :newId WHERE id = :oldId",
-                new MapSqlParameterSource("newId", newId).addValue("oldId", oldId));
+                "DELETE FROM user_details WHERE id = :oldId",
+                new MapSqlParameterSource("oldId", oldId));
 
         log.info("Migrated user UUID {} → {}", oldId, newId);
     }
