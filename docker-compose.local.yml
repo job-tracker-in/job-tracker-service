@@ -1,0 +1,29 @@
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: local_postgres
+    environment:
+      POSTGRES_USER: jobuser
+      POSTGRES_PASSWORD: jobpass
+      POSTGRES_DB: jobtracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobuser"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: local_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru
+
+volumes:
+  local_postgres_data:
