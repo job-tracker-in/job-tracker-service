@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -61,6 +62,13 @@ public class GlobalExceptionHandler {
                 null
         );
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(NoResourceFoundException ex) {
+        ErrorResponse response = new ErrorResponse(
+                "NOT_FOUND", ex.getMessage(), 404, Instant.now(), null);
+        return ResponseEntity.status(404).body(response);
     }
 
     @ExceptionHandler(JobApplicationException.class)
