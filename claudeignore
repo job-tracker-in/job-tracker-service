@@ -1,0 +1,50 @@
+# Build output
+target/
+*.class
+*.jar
+*.war
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Grafana dashboards/data (not needed for coding)
+grafana/
+
+# Logs
+*.log
+logs/
+
+# Docker (usually not needed unless working on infra)
+# Uncomment below if you want to exclude:
+# Dockerfile
+# docker-compose*.yml
+
+# Environment files (sensitive + not needed)
+.env
+.env.local
+.env.*
+
+# Git
+.git/
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test reports
+target/surefire-reports/
+target/failsafe-reports/
+
+# Node (if any frontend)
+node_modules/
+
+# Compiled frontend assets
+src/main/resources/static/dist/
+src/main/resources/static/build/
